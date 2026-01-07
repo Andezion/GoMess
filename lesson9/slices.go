@@ -2,6 +2,7 @@ package main
 
 import (
 	"fmt"
+	"slices"
 )
 
 func main() {
@@ -21,4 +22,14 @@ func main() {
 
 	fmt.Println("After Append:", s)
 
+	l := s[1:3]
+	fmt.Println("Sliced Slice:", l)
+
+	t := []string{"g", "h", "i"}
+	fmt.Println("dcl:", t)
+
+	t2 := []string{"g", "h", "i"}
+	if slices.Equal(t, t2) {
+		fmt.Println("t == t2")
+	}
 }
