@@ -161,24 +161,37 @@ func (s *Server) closeAllClients() {
 }
 
 func (s *Server) HandleConnection(conn net.Conn) {
-	conn.Write([]byte("Введите ваше имя: "))
+	fmt.Println("[DEBUG] Новое подключение от", conn.RemoteAddr())
+
+	writer := bufio.NewWriter(conn)
+	writer.WriteString("Введите ваше имя: ")
+	writer.Flush()
+
+	fmt.Println("[DEBUG] Отправили запрос имени")
+
 	reader := bufio.NewReader(conn)
 	name, err := reader.ReadString('\n')
 	if err != nil {
+		fmt.Println("[DEBUG] Ошибка чтения имени:", err)
 		conn.Close()
 		return
 	}
 	name = strings.TrimSpace(name)
+	fmt.Println("[DEBUG] Получили имя:", name)
 
 	s.mu.RLock()
 	_, exists := s.clients[name]
 	s.mu.RUnlock()
 
 	if exists {
-		conn.Write([]byte("Это имя уже занято. Попробуйте другое.\n"))
+		writer := bufio.NewWriter(conn)
+		writer.WriteString("Это имя уже занято. Попробуйте другое.\n")
+		writer.Flush()
 		conn.Close()
 		return
 	}
+
+	fmt.Println("[DEBUG] Регистрируем клиента:", name)
 
 	ctx, cancel := context.WithCancel(s.ctx)
 	client := &Client{
@@ -191,6 +204,15 @@ func (s *Server) HandleConnection(conn net.Conn) {
 	}
 
 	s.register <- client
+
+	fmt.Println("[DEBUG] Клиент зарегистрирован, отправляем приветствие")
+
+	writer = bufio.NewWriter(conn)
+	writer.WriteString("\n=== Добро пожаловать в GoMess! ===\n")
+	writer.WriteString("Команды: /users, /help, /quit\n\n")
+	writer.Flush()
+
+	fmt.Println("[DEBUG] Запускаем горутины для клиента:", name)
 
 	go client.writeMessages()
 	go client.readMessages()
@@ -264,9 +286,6 @@ func (c *Client) formatMessage(msg Message) string {
 
 	switch msg.Type {
 	case TextMessage:
-		if msg.From == c.name {
-			return fmt.Sprintf("[%s] Вы: %s", timeStr, msg.Content)
-		}
 		return fmt.Sprintf("[%s] %s: %s", timeStr, msg.From, msg.Content)
 	case JoinMessage, LeaveMessage, UserListMessage:
 		return fmt.Sprintf("[%s] *** %s ***", timeStr, msg.Content)

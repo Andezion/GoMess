@@ -60,10 +60,6 @@ func (c *ChatClient) Start() error {
 	}
 	c.writer.Flush()
 
-	fmt.Println("\nПодключено к серверу!")
-	fmt.Println("Команды: /users - список пользователей, /help - справка, /quit - выход")
-	fmt.Println()
-
 	sigChan := make(chan os.Signal, 1)
 	signal.Notify(sigChan, os.Interrupt, syscall.SIGTERM)
 
@@ -105,7 +101,7 @@ func (c *ChatClient) readMessages() {
 
 			message = strings.TrimSpace(message)
 			if message != "" {
-				fmt.Printf("\r%s\n> ", message)
+				fmt.Printf("\r%s\n", message)
 			}
 		}
 	}
@@ -116,7 +112,6 @@ func (c *ChatClient) writeMessages() {
 	defer c.cancel()
 
 	scanner := bufio.NewScanner(os.Stdin)
-	fmt.Print("> ")
 
 	for scanner.Scan() {
 		select {
@@ -127,7 +122,6 @@ func (c *ChatClient) writeMessages() {
 			input = strings.TrimSpace(input)
 
 			if input == "" {
-				fmt.Print("> ")
 				continue
 			}
 
@@ -148,8 +142,6 @@ func (c *ChatClient) writeMessages() {
 				time.Sleep(100 * time.Millisecond)
 				return
 			}
-
-			fmt.Print("> ")
 		}
 	}
 }
