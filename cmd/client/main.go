@@ -42,27 +42,32 @@ func NewChatClient(address string) (*ChatClient, error) {
 func (c *ChatClient) Start() error {
 	defer c.conn.Close()
 
+	fmt.Println("[DEBUG] Ожидаем запрос имени от сервера...")
 	namePrompt, err := c.reader.ReadString('\n')
 	if err != nil {
 		return fmt.Errorf("Ошибка чтения от сервера: %w", err)
 	}
 	fmt.Print(namePrompt)
+	fmt.Println("[DEBUG] Получили запрос:", namePrompt)
 
 	nameScanner := bufio.NewScanner(os.Stdin)
 	if !nameScanner.Scan() {
 		return fmt.Errorf("Ошибка чтения имени")
 	}
 	name := nameScanner.Text()
+	fmt.Println("[DEBUG] Отправляем имя:", name)
 
 	_, err = c.writer.WriteString(name + "\n")
 	if err != nil {
 		return fmt.Errorf("Ошибка отправки имени: %w", err)
 	}
 	c.writer.Flush()
+	fmt.Println("[DEBUG] Имя отправлено, ожидаем ответа...")
 
 	sigChan := make(chan os.Signal, 1)
 	signal.Notify(sigChan, os.Interrupt, syscall.SIGTERM)
 
+	fmt.Println("[DEBUG] Запускаем горутины...")
 	c.wg.Add(1)
 	go c.readMessages()
 

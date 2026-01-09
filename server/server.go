@@ -164,11 +164,7 @@ func (s *Server) HandleConnection(conn net.Conn) {
 	fmt.Println("[DEBUG] Новое подключение от", conn.RemoteAddr())
 
 	writer := bufio.NewWriter(conn)
-	writer.WriteString("Введите ваше имя: ")
-	writer.Flush()
-
-	fmt.Println("[DEBUG] Отправили запрос имени")
-
+	writer.WriteString("Введите ваше имя: \n")
 	reader := bufio.NewReader(conn)
 	name, err := reader.ReadString('\n')
 	if err != nil {
